@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+
+  frontend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/cicd-frontend:${IMAGE_TAG}
+    container_name: cicd-frontend
+    restart: unless-stopped
+    expose:
+      - "3000"
+    networks:
+      - cicd-network
+
+  backend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/cicd-backend:${IMAGE_TAG}
+    container_name: cicd-backend
+    restart: unless-stopped
+    expose:
+      - "5000"
+    environment:
+      - APP_VERSION=${IMAGE_TAG}
+    networks:
+      - cicd-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: cicd-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - cicd-network
+
+networks:
+  cicd-network:
+    driver: bridge

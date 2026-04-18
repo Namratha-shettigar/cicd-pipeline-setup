@@ -1,0 +1,43 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: "us-east-1"
+    FRONTEND_REPO: "cicd-frontend"
+    BACKEND_REPO: "cicd-backend"
+
+phases:
+  pre_build:
+    commands:
+      - COMMIT_SHA=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
+      - IMAGE_TAG="${CODEBUILD_BUILD_NUMBER}-${COMMIT_SHA}"
+      - echo "Image tag is $IMAGE_TAG"
+
+  build:
+    commands:
+      - echo Building frontend...
+      - docker build -t $FRONTEND_REPO:$IMAGE_TAG ./frontend
+      - echo Building backend...
+      - docker build -t $BACKEND_REPO:$IMAGE_TAG ./backend
+
+  post_build:
+    commands:
+      - printf '{"ImageTag":"%s","CommitSHA":"%s","BuildNumber":"%s"}' $IMAGE_TAG $COMMIT_SHA $CODEBUILD_BUILD_NUMBER > imageDetail.json
+      - cat imageDetail.json
+
+artifacts:
+  files:
+    - imageDetail.json
+    - docker-compose.yml
+    - nginx/nginx.conf
+    - buildspec-deploy.yml
+    - buildspec-verify.yml
+  secondary-artifacts:
+    frontend_image:
+      files:
+        - "**/*"
+      base-directory: frontend
+    backend_image:
+      files:
+        - "**/*"
+      base-directory: backend
