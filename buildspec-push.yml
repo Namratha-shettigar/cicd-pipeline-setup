@@ -1,0 +1,42 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: "us-east-1"
+    FRONTEND_REPO: "cicd-frontend"
+    BACKEND_REPO: "cicd-backend"
+
+phases:
+  pre_build:
+    commands:
+      - IMAGE_TAG=$(cat imageDetail.json | python3 -c "import sys,json; print(json.load(sys.stdin)['ImageTag'])")
+      - ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+      - echo Logging in to ECR...
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+  build:
+    commands:
+      - echo Rebuilding images for push...
+      - docker build -t $FRONTEND_REPO:$IMAGE_TAG ./frontend
+      - docker build -t $BACKEND_REPO:$IMAGE_TAG ./backend
+
+      - docker tag $FRONTEND_REPO:$IMAGE_TAG $ECR_REGISTRY/$FRONTEND_REPO:$IMAGE_TAG
+      - docker tag $FRONTEND_REPO:$IMAGE_TAG $ECR_REGISTRY/$FRONTEND_REPO:latest
+      - docker tag $BACKEND_REPO:$IMAGE_TAG  $ECR_REGISTRY/$BACKEND_REPO:$IMAGE_TAG
+      - docker tag $BACKEND_REPO:$IMAGE_TAG  $ECR_REGISTRY/$BACKEND_REPO:latest
+
+  post_build:
+    commands:
+      - docker push $ECR_REGISTRY/$FRONTEND_REPO:$IMAGE_TAG
+      - docker push $ECR_REGISTRY/$FRONTEND_REPO:latest
+      - docker push $ECR_REGISTRY/$BACKEND_REPO:$IMAGE_TAG
+      - docker push $ECR_REGISTRY/$BACKEND_REPO:latest
+      - echo Push complete for tag $IMAGE_TAG
+
+artifacts:
+  files:
+    - imageDetail.json
+    - docker-compose.yml
+    - nginx/nginx.conf
+    - buildspec-deploy.yml
+    - buildspec-verify.yml

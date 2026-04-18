@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hello App</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+    }
+    .container { text-align: center; padding: 40px; }
+    .emoji { font-size: 64px; margin-bottom: 20px; }
+    h1 { font-size: 48px; font-weight: 700; margin-bottom: 12px; letter-spacing: -1px; }
+    .subtitle { font-size: 18px; color: #a0aec0; margin-bottom: 40px; }
+    .badges { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+    .badge {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 8px 20px;
+      border-radius: 99px;
+      font-size: 13px;
+      backdrop-filter: blur(10px);
+    }
+    .badge.green { background: rgba(72,187,120,0.2); border-color: #48bb78; color: #48bb78; }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 24px 32px;
+      backdrop-filter: blur(10px);
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .card p { color: #a0aec0; font-size: 14px; margin-bottom: 8px; }
+    .card code {
+      background: rgba(255,255,255,0.1);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #68d391;
+    }
+    .status { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; }
+    .dot { width: 8px; height: 8px; background: #48bb78; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="emoji">🚀</div>
+    <h1>Hello, World!</h1>
+    <p class="subtitle">CI/CD Pipeline — AWS CodePipeline + ECR + EC2</p>
+    <div class="badges">
+      <span class="badge">Docker</span>
+      <span class="badge">Nginx</span>
+      <span class="badge">Node.js</span>
+      <span class="badge green">● Deployed</span>
+    </div>
+    <div class="card">
+      <p>Health check endpoint</p>
+      <code>GET /health</code>
+      <div class="status">
+        <div class="dot"></div>
+        <span style="font-size:13px; color:#68d391;">Service is running</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
