@@ -13,6 +13,7 @@ phases:
       - IMAGE_TAG="${CODEBUILD_BUILD_NUMBER}-${COMMIT_SHA}"
       - ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
       - echo "Image tag is $IMAGE_TAG"
+      - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
       - echo "Logging in to ECR..."
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
 

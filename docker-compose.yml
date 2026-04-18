@@ -23,7 +23,7 @@ services:
       - cicd-network
 
   nginx:
-    image: nginx:alpine
+    image: public.ecr.aws/nginx/nginx:alpine
     container_name: cicd-nginx
     restart: unless-stopped
     ports:
