@@ -12,6 +12,7 @@ phases:
       - COMMIT_SHA=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
       - IMAGE_TAG="${CODEBUILD_BUILD_NUMBER}-${COMMIT_SHA}"
       - echo "Image tag is $IMAGE_TAG"
+      - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
 
   build:
     commands:
