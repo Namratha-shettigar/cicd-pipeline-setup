@@ -8,9 +8,14 @@ phases:
   pre_build:
     commands:
       - IMAGE_TAG=$(cat imageDetail.json | python3 -c "import sys,json; print(json.load(sys.stdin)['ImageTag'])")
-      - echo Deploying image tag $IMAGE_TAG to EC2 via SSM...
+      - echo "Deploying image tag $IMAGE_TAG"
       - INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=cicd-server" "Name=instance-state-name,Values=running" --query "Reservations[0].Instances[0].InstanceId" --output text --region $AWS_REGION)
-      - echo Target instance $INSTANCE_ID
+      - echo "Target instance $INSTANCE_ID"
+      - |
+        if [ "$INSTANCE_ID" = "None" ] || [ -z "$INSTANCE_ID" ]; then
+          echo "ERROR: EC2 instance with tag Name=cicd-server not found"
+          exit 1
+        fi
 
   build:
     commands:
@@ -19,29 +24,19 @@ phases:
           --instance-ids "$INSTANCE_ID" \
           --document-name "AWS-RunPowerShellScript" \
           --region $AWS_REGION \
-          --parameters commands=["
-            \$env:AWS_ACCOUNT_ID = (aws sts get-caller-identity --query Account --output text);
-            \$env:AWS_REGION = '${AWS_REGION}';
-            \$env:IMAGE_TAG = '${IMAGE_TAG}';
-            aws ecr get-login-password --region \$env:AWS_REGION | docker login --username AWS --password-stdin \"\$env:AWS_ACCOUNT_ID.dkr.ecr.\$env:AWS_REGION.amazonaws.com\";
-            Set-Location C:\\app\\cicd;
-            docker-compose pull;
-            docker-compose up -d --force-recreate --remove-orphans;
-            Write-Output 'Deploy complete'
-          "] \
+          --parameters "commands=[\"\\$env:AWS_ACCOUNT_ID = (aws sts get-caller-identity --query Account --output text); \\$env:AWS_REGION = '$AWS_REGION'; \\$env:IMAGE_TAG = '$IMAGE_TAG'; aws ecr get-login-password --region \\$env:AWS_REGION | docker login --username AWS --password-stdin \\\"\\$env:AWS_ACCOUNT_ID.dkr.ecr.\\$env:AWS_REGION.amazonaws.com\\\"; Set-Location C:\\\\app\\\\cicd; docker-compose pull; docker-compose up -d --force-recreate --remove-orphans; Write-Output 'Deploy complete'\"]" \
           --query "Command.CommandId" \
           --output text)
-      - echo SSM Command ID $COMMAND_ID
-      - sleep 30
+      - echo "SSM Command ID $COMMAND_ID"
+      - sleep 60
+      - STATUS=$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" --region $AWS_REGION --query "Status" --output text)
+      - echo "SSM command status $STATUS"
       - |
-        STATUS=$(aws ssm get-command-invocation \
-          --command-id "$COMMAND_ID" \
-          --instance-id "$INSTANCE_ID" \
-          --region $AWS_REGION \
-          --query "Status" \
-          --output text)
-      - echo SSM command status $STATUS
-      - if [ "$STATUS" != "Success" ]; then echo "Deploy failed - SSM status $STATUS"; exit 1; fi
+        if [ "$STATUS" != "Success" ]; then
+          echo "Deploy failed - SSM status $STATUS"
+          aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" --region $AWS_REGION --query "StandardErrorContent" --output text
+          exit 1
+        fi
 
 artifacts:
   files:
